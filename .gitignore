@@ -1,0 +1,42 @@
+# 忽略的文件夹
+ViT/
+result/
+CNN/checkpoint/
+CNN/data/
+machine_learning/feature/
+
+# 以下是一些常用的忽略规则，你可以根据需要保留或删除
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 虚拟环境
+venv/
+ENV/
+env/
+
+# IDE相关
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 日志文件
+*.log
