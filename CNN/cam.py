@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 from scipy.interpolate import RegularGridInterpolator
-from util.dataloader import adjust_window
+from util.dataset import adjust_window
 
 def b_spline_resample_3d(data, target_size, order=3):
     """
@@ -45,7 +45,6 @@ def b_spline_resample_3d(data, target_size, order=3):
     resampled_data = interpolator(points)
     
     return resampled_data
-
 
 class GradCAM:
     def __init__(self, model, target_layer):
@@ -102,7 +101,7 @@ def normalize_image(img):
     """归一化图像到0-1范围"""
     img = img.copy()
     img = img - img.min()
-    img = img / (img.max() + 1e-7)
+    img = img / (img.max() + 1e-8)
     return img
 
 
@@ -172,7 +171,7 @@ def visualize_3d_cam(model, input_tensor, mask_tensor, target_class=None, num_sl
     # 选择要显示的切片
     depth = original_image.shape[0]
     # slice_indices = np.linspace(0, depth-1, num_slices, dtype=int)
-    slice_indices = [7,9,11,13,15,17,19,20,21,23,25,27]
+    slice_indices = [21,23,25,27,29,31,33,35,37,39,41,43]
     
     # 创建图表
     fig, axes = plt.subplots(4, num_slices, figsize=(3*num_slices, 18))
@@ -207,7 +206,7 @@ def visualize_3d_cam(model, input_tensor, mask_tensor, target_class=None, num_sl
     
     plt.tight_layout()
     # 保存pdf
-    plt.savefig('cam_35.pdf')
+    plt.savefig('cam_3.pdf')
     plt.show()
 
 # 主函数
@@ -216,19 +215,20 @@ if __name__ == "__main__":
     # model = Medical3DCNN(in_channels=1, num_classes=1)
     model = MaskAttention3DCNN()
     # 如果有预训练权重，在这里加载
-    model.load_state_dict(torch.load('./checkpoint/resnet_10/chk_5/kits_epoch35.pth'))
-
+    model.load_state_dict(torch.load('./checkpoint/chk_1/kits_epoch90.pth'))
     
     # 确保模型处于评估模式
     model.eval()
     
     # 创建示例输入
     # input_tensor = torch.randn(1, 1, 32, 224, 224)
-    input_np = np.load('./data/images/train_test/TJH0017.npy')
+
+    input_np = np.load('./data/images/train_test/TJH0475.npy')
+
     input_np = adjust_window(input_np, 600, 40)
-    mask_np = np.load('./data/labels/train_test/TJH0017.npy')
+    mask_np = np.load('./data/labels/train_test/.npy')
     # mask_np[mask_np != 2] = 0
-    # mask_np[mask_np > 0] = 1
+    # mask_np[mask_np == 2] = 1
     mask_np[mask_np == 3] = 1
     input_tensor = torch.from_numpy(input_np).unsqueeze(0).unsqueeze(0).float()
     mask_tensor = torch.from_numpy(mask_np).unsqueeze(0).unsqueeze(0).float()

@@ -1,7 +1,13 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import torch
+import torch.nn as nn
+from torchviz import make_dot
+from torchvision.utils import save_image
+import matplotlib.pyplot as plt
+from torch.utils.tensorboard import SummaryWriter
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1):
@@ -21,7 +27,6 @@ class ConvBlock(nn.Module):
     def forward(self, x):
         return self.conv(x)
 
-
 class ResBlock(nn.Module):
     def __init__(self, channels):
         super().__init__()
@@ -33,7 +38,6 @@ class ResBlock(nn.Module):
         out = self.conv1(x)
         out = self.conv2(out)
         return out + residual  # 非in-place操作
-
 
 class ChannelAttention(nn.Module):
     def __init__(self, channels, reduction_ratio=16):
@@ -57,7 +61,6 @@ class ChannelAttention(nn.Module):
         out = avg_out + max_out
         return torch.sigmoid(out).view(b, c, 1, 1, 1)
 
-
 class SpatialAttention(nn.Module):
     def __init__(self, kernel_size=7):
         super().__init__()
@@ -70,7 +73,6 @@ class SpatialAttention(nn.Module):
         max_out, _ = torch.max(x, dim=1, keepdim=True)
         x = torch.cat([avg_out, max_out], dim=1)
         return torch.sigmoid(self.conv(x))
-
 
 class MaskAttentionModule(nn.Module):
     def __init__(self, channels):
@@ -105,9 +107,8 @@ class MaskAttentionModule(nn.Module):
             
         return x
 
-
 class MaskAttention3DCNN(nn.Module):
-    def __init__(self, in_channels=1, num_classes=1):
+    def __init__(self, in_channels=1, num_classes=2):
         super().__init__()
         
         # 初始特征提取
@@ -179,16 +180,6 @@ class MaskAttention3DCNN(nn.Module):
         
         return x
 
-
-import torch
-import torch.nn as nn
-from torchviz import make_dot
-from torchvision.utils import save_image
-import matplotlib.pyplot as plt
-from torch.utils.tensorboard import SummaryWriter
-import numpy as np
-
-
 def visualize_model():
     # 1. 创建模型实例
     model = MaskAttention3DCNN()
@@ -207,32 +198,32 @@ def visualize_model():
         y = model(x)
         dot = make_dot(y, params=dict(model.named_parameters()))
         dot.render("ma_3dcnn_structure", format="pdf")
-        
+
         # 打印模型结构
         print("Model Structure:")
         print(model)
-        
+
         # 计算参数量
         total_params = sum(p.numel() for p in model.parameters())
         print(f"Total parameters: {total_params:,}")
-    
+
     # 4. 特征图可视化
     def visualize_feature_maps():
         # 注册钩子来获取中间特征图
         feature_maps = {}
-        
+
         def hook_fn(module, input, output):
             feature_maps[module] = output.detach()
-        
+
         # 为每个主要层注册钩子
         for name, module in model.named_modules():
             if isinstance(module, nn.Conv3d):
                 module.register_forward_hook(hook_fn)
-        
+
         # 前向传播
         with torch.no_grad():
             model(x)
-        
+
         # 可视化特征图
         for layer, feature_map in feature_maps.items():
             # 选择第一个样本的特征图
@@ -354,21 +345,19 @@ def visualize_training_process():
     plt.savefig('training_process.png')
     plt.close()
 
-# if __name__ == "__main__":
-#     visualize_model()
-#     # visualize_training_process()
-
 def test_model():
     # 测试模型
-    model = MaskAttention3DCNN(in_channels=1, num_classes=1)
-    batch_size, channels, depth, height, width = 2, 1, 64, 224, 224
+    model = MaskAttention3DCNN(in_channels=1, num_classes=2)
+    batch_size, channels, depth, height, width = 10, 1, 64, 224, 224
     x = torch.randn(batch_size, channels, depth, height, width)
     mask = torch.ones(batch_size, height, width)
     output = model(x, mask)
     print("Input shape:", x.shape)
     print("Output shape:", output.shape)
+    print(output)
     return model
 
-
 if __name__ == "__main__":
-    model = test_model()
+    # model = test_model()
+    visualize_model()
+    # visualize_training_process()

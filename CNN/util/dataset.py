@@ -34,6 +34,7 @@ class NonRepeatingBalancedSampler(torch.utils.data.Sampler):
         self.num_batches = (total_samples + batch_size - 1) // batch_size
         
     def __iter__(self):
+
         # 复制并打乱索引
         pos_indices = self.pos_indices.copy()
         neg_indices = self.neg_indices.copy()
@@ -118,6 +119,7 @@ class RatioBalancedBatchSampler(torch.utils.data.Sampler):
         print(f"Total batches per epoch: {self.num_batches}")
         
     def __iter__(self):
+
         # 复制并打乱负样本索引
         neg_indices = self.neg_indices.copy()
         np.random.shuffle(neg_indices)
@@ -203,6 +205,7 @@ class KidneyTumorDataset(Dataset):
         clinical_data = clinical_data[clinical_data['exclusion'] == 1]
         if self.phase == 'train_test':
             clinical_label = clinical_data[(clinical_data['dataset'] == "tongji") | (clinical_data['dataset'] == "xiangyang")]
+
             X_train, X_test, y_train, y_test = train_test_split(
                 clinical_label['dataset']+ '&' + clinical_label["name"], 
                 clinical_label["class"], 
@@ -210,15 +213,14 @@ class KidneyTumorDataset(Dataset):
                 random_state=42, 
                 stratify=clinical_label["class"]
             )
-            
+
             if self.stage == 'test':
                 self.img_list = X_test.values
                 self.label_list = y_test.values
             elif self.stage == 'train':
-                X_train = pd.concat([X_train, X_test.iloc[:30]], axis=0)
-                y_train = pd.concat([y_train, y_test.iloc[:30]], axis=0)
                 self.img_list = X_train.values
                 self.label_list = y_train.values
+
             else:
                 raise ValueError('stage must be train or test')
         elif self.phase == 'kits_test':
@@ -264,15 +266,14 @@ class KidneyTumorDataset(Dataset):
         
         return new_img, mask, label, self.img_list[idx]
 
-def get_kidney_loader(sets, batch_size=4, do_augment=True, num_workers=4):
+def get_kidney_loader(sets, batch_size=8, do_augment=True, num_workers=8):
     """创建数据加载器"""
     dataset = KidneyTumorDataset(sets, do_augment=do_augment)
     
     if sets.stage == 'train':
-        
         # 训练时使用BalancedBatchSampler
         sampler = NonRepeatingBalancedSampler(dataset, batch_size)
-        # sampler = RatioBalancedBatchSampler(dataset, batch_size)
+        # sampler = RatioBalancedBatchSampler(dataset, batch_size, pos_ratio=0.25)
         loader = DataLoader(
             dataset,
             batch_sampler=sampler,
@@ -289,18 +290,18 @@ def get_kidney_loader(sets, batch_size=4, do_augment=True, num_workers=4):
     
     return loader
 
-# 使用示例：
-# from setting import parse_opts
-# sets = parse_opts()
-# sets.phase = 'train_test'
-# sets.stage = 'train'
+# # 使用示例：
+# if __name__ == '__main__':
+#     from setting import parse_opts
+#     sets = parse_opts()
+#     sets.phase = 'train_test'
+#     sets.stage = 'train'
 
-# train_loader = get_kidney_loader(
-#     sets,
-#     batch_size=16,
-#     do_augment=True
-# )
+#     train_loader = get_kidney_loader(
+#         sets,
+#         batch_size=16,
+#         do_augment=True
+#     )
 
-
-# for batch_idx, (data, mask, target) in enumerate(train_loader):
-#     print(batch_idx, data.shape, mask.shape, target, sum(target))
+#     for batch_idx, (data, mask, target) in enumerate(train_loader):
+#         print(batch_idx, data.shape, mask.shape, target, sum(target))
