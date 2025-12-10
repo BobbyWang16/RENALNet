@@ -1,1 +1,2 @@
-# 这个仓库存储的是我对肾脏透明细胞癌分期的代码
+# This code repository stores the code I wrote for the staging of clear cell renal cell carcinoma.
+# The referenced article is "Noninvasive prediction of occult pT3a upstaging in localized ccRCC with radiogenomic insights and prognostic relevance"
